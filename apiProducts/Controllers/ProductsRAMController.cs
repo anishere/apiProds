@@ -18,6 +18,64 @@ namespace apiProducts.Controllers
         }
 
         [HttpGet]
+        [Route("GetAllRAM")]
+        public Response GetAllRAM()
+        {
+            List<ProductsRAM> lstproducts = new List<ProductsRAM>();
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM ProductsRAM ORDER BY ProductID", connection);
+
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+
+            Response response = new Response();
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    ProductsRAM products = new ProductsRAM();
+                    products.ProductID = Convert.ToInt32(dt.Rows[i]["ProductID"]);
+                    products.ProductName = Convert.ToString(dt.Rows[i]["ProductName"]);
+                    products.Description = Convert.ToString(dt.Rows[i]["Description"]);
+                    products.Brand = Convert.ToString(dt.Rows[i]["Brand"]);
+                    products.Discount = Convert.ToDecimal(dt.Rows[i]["Discount"]);
+                    products.Price = Convert.ToDecimal(dt.Rows[i]["Price"]);
+                    products.Image = Convert.ToString(dt.Rows[i]["Image"]);
+                    products.Image2 = Convert.ToString(dt.Rows[i]["Image2"]);
+                    products.Image3 = Convert.ToString(dt.Rows[i]["Image3"]);
+                    products.Image4 = Convert.ToString(dt.Rows[i]["Image4"]);
+                    products.BaoHanh = Convert.ToString(dt.Rows[i]["BaoHanh"]);
+                    products.MauSac = Convert.ToString(dt.Rows[i]["MauSac"]);
+                    products.TheHe = Convert.ToString(dt.Rows[i]["TheHe"]);
+                    products.Bus = Convert.ToString(dt.Rows[i]["Bus"]);
+                    products.DenLed = Convert.ToString(dt.Rows[i]["DenLed"]);
+                    products.LoaiHang = Convert.ToString(dt.Rows[i]["LoaiHang"]);
+                    products.PartNumber = Convert.ToString(dt.Rows[i]["PartNumber"]);
+                    products.NhuCau = Convert.ToString(dt.Rows[i]["NhuCau"]);
+                    products.DungLuong = Convert.ToString(dt.Rows[i]["DungLuong"]);
+                    products.Vol = Convert.ToString(dt.Rows[i]["Vol"]);
+                    products.Type = Convert.ToString(dt.Rows[i]["Type"]);
+                    products.NgayNhap = Convert.ToDateTime(dt.Rows[i]["NgayNhap"]);
+                    lstproducts.Add(products);
+                }
+
+                response.StatusCode = 200;
+                response.StatusMessage = "Data found";
+                response.listram = lstproducts;
+            }
+            else
+            {
+                response.StatusCode = 100;
+                response.StatusMessage = "No data found";
+                response.listram = null;
+            }
+
+            return response;
+        }
+
+
+        [HttpGet]
         [Route("ListRAM")]
         public Response GetProductsByPage(int page = 1, int pageSize = 20)
         {
@@ -45,7 +103,10 @@ namespace apiProducts.Controllers
                     products.Brand = Convert.ToString(dt.Rows[i]["Brand"]);
                     products.Discount = Convert.ToDecimal(dt.Rows[i]["Discount"]);
                     products.Price = Convert.ToDecimal(dt.Rows[i]["Price"]);
-                    products.Image = Convert.ToString(dt.Rows[i]["Image"]);                  
+                    products.Image = Convert.ToString(dt.Rows[i]["Image"]);
+                    products.Image2 = Convert.ToString(dt.Rows[i]["Image2"]);
+                    products.Image3 = Convert.ToString(dt.Rows[i]["Image3"]);
+                    products.Image4 = Convert.ToString(dt.Rows[i]["Image4"]);
                     products.BaoHanh = Convert.ToString(dt.Rows[i]["BaoHanh"]);
                     products.MauSac = Convert.ToString(dt.Rows[i]["MauSac"]);
                     products.TheHe = Convert.ToString(dt.Rows[i]["TheHe"]);
@@ -104,6 +165,9 @@ namespace apiProducts.Controllers
                         product.Discount = Convert.ToDecimal(reader["Discount"]);
                         product.Price = Convert.ToDecimal(reader["Price"]);
                         product.Image = Convert.ToString(reader["Image"]);
+                        product.Image2 = Convert.ToString(reader["Image2"]);
+                        product.Image3 = Convert.ToString(reader["Image3"]);
+                        product.Image4 = Convert.ToString(reader["Image4"]);
                         product.BaoHanh = Convert.ToString(reader["BaoHanh"]);
                         product.MauSac = Convert.ToString(reader["MauSac"]);
                         product.TheHe = Convert.ToString(reader["TheHe"]);
@@ -179,6 +243,140 @@ namespace apiProducts.Controllers
             return response;
         }
 
+        [HttpGet]
+        [Route("TotalProdsByBrand")]
+        public Response GetTotalProductsByBrand(string brand)
+        {
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+            Response response = new Response();
+
+            try
+            {
+                connection.Open();
+
+                string query = "SELECT COUNT(*) FROM ProductsRAM WHERE Brand = @Brand";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Brand", brand);
+
+                    int totalCount = Convert.ToInt32(cmd.ExecuteScalar());
+
+                    response.StatusCode = 200;
+                    response.StatusMessage = "Total product count by brand found";
+                    response.TotalCount = totalCount;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+            }
+            finally
+            {
+                connection.Close();
+            }
+
+            return response;
+        }
+
+        [HttpGet]
+        [Route("GetAllRAMBrands")]
+        public Response GetAllRAMBrands()
+        {
+            List<string> lstBrands = new List<string>();
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            SqlDataAdapter da = new SqlDataAdapter("SELECT DISTINCT Brand FROM ProductsRAM", connection);
+
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+
+            Response response = new Response();
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    string brand = Convert.ToString(dt.Rows[i]["Brand"]);
+                    lstBrands.Add(brand);
+                }
+
+                response.StatusCode = 200;
+                response.StatusMessage = "Data found";
+                response.Brands = lstBrands;
+            }
+            else
+            {
+                response.StatusCode = 100;
+                response.StatusMessage = "No data found";
+                response.Brands = null;
+            }
+
+            return response;
+        }
+
+        [HttpGet]
+        [Route("GetRAMByBrand")]
+        public Response GetRAMByBrand(string brand, int page = 1, int pageSize = 20)
+        {
+            List<ProductsRAM> lstproducts = new List<ProductsRAM>();
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            int startIndex = (page - 1) * pageSize;
+
+            SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM ProductsRAM WHERE Brand = @Brand ORDER BY ProductID OFFSET @StartIndex ROWS FETCH NEXT @PageSize ROWS ONLY", connection);
+            da.SelectCommand.Parameters.AddWithValue("@Brand", brand);
+            da.SelectCommand.Parameters.AddWithValue("@StartIndex", startIndex);
+            da.SelectCommand.Parameters.AddWithValue("@PageSize", pageSize);
+
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+
+            Response response = new Response();
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    ProductsRAM products = new ProductsRAM();
+                    products.ProductID = Convert.ToInt32(dt.Rows[i]["ProductID"]);
+                    products.ProductName = Convert.ToString(dt.Rows[i]["ProductName"]);
+                    products.Description = Convert.ToString(dt.Rows[i]["Description"]);
+                    products.Brand = Convert.ToString(dt.Rows[i]["Brand"]);
+                    products.Discount = Convert.ToDecimal(dt.Rows[i]["Discount"]);
+                    products.Price = Convert.ToDecimal(dt.Rows[i]["Price"]);
+                    products.Image = Convert.ToString(dt.Rows[i]["Image"]);
+                    products.Image2 = Convert.ToString(dt.Rows[i]["Image2"]);
+                    products.Image3 = Convert.ToString(dt.Rows[i]["Image3"]);
+                    products.Image4 = Convert.ToString(dt.Rows[i]["Image4"]);
+                    products.BaoHanh = Convert.ToString(dt.Rows[i]["BaoHanh"]);
+                    products.MauSac = Convert.ToString(dt.Rows[i]["MauSac"]);
+                    products.TheHe = Convert.ToString(dt.Rows[i]["TheHe"]);
+                    products.Bus = Convert.ToString(dt.Rows[i]["Bus"]);
+                    products.DenLed = Convert.ToString(dt.Rows[i]["DenLed"]);
+                    products.LoaiHang = Convert.ToString(dt.Rows[i]["LoaiHang"]);
+                    products.PartNumber = Convert.ToString(dt.Rows[i]["PartNumber"]);
+                    products.NhuCau = Convert.ToString(dt.Rows[i]["NhuCau"]);
+                    products.DungLuong = Convert.ToString(dt.Rows[i]["DungLuong"]);
+                    products.Vol = Convert.ToString(dt.Rows[i]["Vol"]);
+                    products.Type = Convert.ToString(dt.Rows[i]["Type"]);
+                    products.NgayNhap = Convert.ToDateTime(dt.Rows[i]["NgayNhap"]);
+                    lstproducts.Add(products);
+                }
+
+                response.StatusCode = 200;
+                response.StatusMessage = "Data found";
+                response.listram = lstproducts;
+            }
+            else
+            {
+                response.StatusCode = 100;
+                response.StatusMessage = "No data found";
+                response.listram = null;
+            }
+
+            return response;
+        }
+
 
         [HttpPost]
         [Route("AddRAM")]
@@ -191,8 +389,8 @@ namespace apiProducts.Controllers
             {
                 connection.Open();
 
-                string query = "INSERT INTO ProductsRAM (ProductName, Description, Brand, Discount, Price, Image, BaoHanh, MauSac, TheHe, Bus, DenLed, LoaiHang, PartNumber, NhuCau, DungLuong, Vol, Type, NgayNhap) " +
-                               "VALUES (@ProductName, @Description, @Brand, @Discount, @Price, @Image, @BaoHanh, @MauSac, @TheHe, @Bus, @DenLed, @LoaiHang, @PartNumber, @NhuCau, @DungLuong, @Vol, @Type, @NgayNhap)";
+                string query = "INSERT INTO ProductsRAM (ProductName, Description, Brand, Discount, Price, Image, Image2, Image3, Image4, BaoHanh, MauSac, TheHe, Bus, DenLed, LoaiHang, PartNumber, NhuCau, DungLuong, Vol, Type, NgayNhap) " +
+                               "VALUES (@ProductName, @Description, @Brand, @Discount, @Price, @Image, @Image2, @Image3, @Image4, @BaoHanh, @MauSac, @TheHe, @Bus, @DenLed, @LoaiHang, @PartNumber, @NhuCau, @DungLuong, @Vol, @Type, @NgayNhap)";
 
                 using (SqlCommand cmd = new SqlCommand(query, connection))
                 {
@@ -202,6 +400,9 @@ namespace apiProducts.Controllers
                     cmd.Parameters.AddWithValue("@Discount", obj.Discount);
                     cmd.Parameters.AddWithValue("@Price", obj.Price);
                     cmd.Parameters.AddWithValue("@Image", obj.Image);
+                    cmd.Parameters.AddWithValue("@Image2", obj.Image2);
+                    cmd.Parameters.AddWithValue("@Image3", obj.Image3);
+                    cmd.Parameters.AddWithValue("@Image4", obj.Image4);
                     cmd.Parameters.AddWithValue("@BaoHanh", obj.BaoHanh);
                     cmd.Parameters.AddWithValue("@MauSac", obj.MauSac);
                     cmd.Parameters.AddWithValue("@TheHe", obj.TheHe);
@@ -256,7 +457,7 @@ namespace apiProducts.Controllers
                 string query = "UPDATE ProductsRAM " +
                                "SET ProductName = @ProductName, Description = @Description, " +
                                "Brand = @Brand, Discount = @Discount, " +
-                               "Price = @Price, Image = @Image, BaoHanh = @BaoHanh, " +
+                               "Price = @Price, Image = @Image, Image2 = @Image2, Image3 = @Image3, Image4 = @Image4, BaoHanh = @BaoHanh, " +
                                "MauSac = @MauSac, TheHe = @TheHe, Bus = @Bus, " +
                                "DenLed = @DenLed, LoaiHang = @LoaiHang, PartNumber = @PartNumber, " +
                                "NhuCau = @NhuCau, DungLuong = @DungLuong, Vol = @Vol, " +
@@ -272,6 +473,9 @@ namespace apiProducts.Controllers
                     cmd.Parameters.AddWithValue("@Discount", updatedProduct.Discount);
                     cmd.Parameters.AddWithValue("@Price", updatedProduct.Price);
                     cmd.Parameters.AddWithValue("@Image", updatedProduct.Image);
+                    cmd.Parameters.AddWithValue("@Image2", updatedProduct.Image2);
+                    cmd.Parameters.AddWithValue("@Image3", updatedProduct.Image3);
+                    cmd.Parameters.AddWithValue("@Image4", updatedProduct.Image4);
                     cmd.Parameters.AddWithValue("@BaoHanh", updatedProduct.BaoHanh);
                     cmd.Parameters.AddWithValue("@MauSac", updatedProduct.MauSac);
                     cmd.Parameters.AddWithValue("@TheHe", updatedProduct.TheHe);

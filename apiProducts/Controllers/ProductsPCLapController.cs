@@ -131,6 +131,9 @@ namespace apiProducts.Controllers
                         product.Discount = Convert.ToDecimal(reader["Discount"]);
                         product.Price = Convert.ToDecimal(reader["Price"]);
                         product.Image = Convert.ToString(reader["Image"]);
+                        product.Image2 = Convert.ToString(reader["Image2"]);
+                        product.Image3 = Convert.ToString(reader["Image3"]);
+                        product.Image4 = Convert.ToString(reader["Image4"]);
                         product.Type = Convert.ToString(reader["Type"]);
                         product.BaoHanh = Convert.ToString(reader["BaoHanh"]);
                         product.CPU = Convert.ToString(reader["CPU"]);
@@ -304,6 +307,9 @@ namespace apiProducts.Controllers
                         product.Discount = Convert.ToDecimal(reader["Discount"]);
                         product.Price = Convert.ToDecimal(reader["Price"]);
                         product.Image = Convert.ToString(reader["Image"]);
+                        product.Image2 = Convert.ToString(reader["Image2"]);
+                        product.Image3 = Convert.ToString(reader["Image3"]);
+                        product.Image4 = Convert.ToString(reader["Image4"]);
                         product.Type = Convert.ToString(reader["Type"]);
                         product.BaoHanh = Convert.ToString(reader["BaoHanh"]);
                         product.CPU = Convert.ToString(reader["CPU"]);
@@ -546,6 +552,9 @@ namespace apiProducts.Controllers
                             Discount = Convert.ToDecimal(row["Discount"]),
                             Price = Convert.ToDecimal(row["Price"]),
                             Image = Convert.ToString(row["Image"]),
+                            Image2 = Convert.ToString(row["Image2"]),
+                            Image3 = Convert.ToString(row["Image3"]),
+                            Image4 = Convert.ToString(row["Image4"]),
                             Type = Convert.ToString(row["Type"]),
                             BaoHanh = Convert.ToString(row["BaoHanh"]),
                             CPU = Convert.ToString(row["CPU"]),
@@ -717,8 +726,8 @@ namespace apiProducts.Controllers
             {
                 connection.Open();
 
-                string query = "INSERT INTO ProductsPCLapTop (ProductName, Description, Brand, Discount, Price, Image, Type, BaoHanh, CPU, RAM, ManHinh, PIN, HeDieuHanh, KhoiLuong, CardDoHoa, BanPhim, MauSac, NhuCau, LuuTru, PhuKien, KieuKetNoi, Hot, NgayNhap) " +
-                               "VALUES (@ProductName, @Description, @Brand, @Discount, @Price, @Image, @Type, @BaoHanh, @CPU, @RAM, @ManHinh, @PIN, @HeDieuHanh, @KhoiLuong, @CardDoHoa, @BanPhim, @MauSac, @NhuCau, @LuuTru, @PhuKien, @KieuKetNoi, @Hot, @NgayNhap)";
+                string query = "INSERT INTO ProductsPCLapTop (ProductName, Description, Brand, Discount, Price, Image, Image2, Image3, Image4, Type, BaoHanh, CPU, RAM, ManHinh, PIN, HeDieuHanh, KhoiLuong, CardDoHoa, BanPhim, MauSac, NhuCau, LuuTru, PhuKien, KieuKetNoi, Hot, NgayNhap) " +
+                               "VALUES (@ProductName, @Description, @Brand, @Discount, @Price, @Image, @Image2, @Image3, @Image4, @Type, @BaoHanh, @CPU, @RAM, @ManHinh, @PIN, @HeDieuHanh, @KhoiLuong, @CardDoHoa, @BanPhim, @MauSac, @NhuCau, @LuuTru, @PhuKien, @KieuKetNoi, @Hot, @NgayNhap)";
 
                 using (SqlCommand cmd = new SqlCommand(query, connection))
                 {
@@ -728,6 +737,9 @@ namespace apiProducts.Controllers
                     cmd.Parameters.AddWithValue("@Discount", obj.Discount);
                     cmd.Parameters.AddWithValue("@Price", obj.Price);
                     cmd.Parameters.AddWithValue("@Image", obj.Image);
+                    cmd.Parameters.AddWithValue("@Image2", obj.Image2);
+                    cmd.Parameters.AddWithValue("@Image3", obj.Image3);
+                    cmd.Parameters.AddWithValue("@Image4", obj.Image4);
                     cmd.Parameters.AddWithValue("@Type", obj.Type);
                     cmd.Parameters.AddWithValue("@BaoHanh", obj.BaoHanh);
                     cmd.Parameters.AddWithValue("@CPU", obj.CPU);
@@ -831,7 +843,7 @@ namespace apiProducts.Controllers
                 string query = "UPDATE ProductsPCLapTop " +
                                "SET ProductName = @ProductName, Description = @Description, " +
                                "Brand = @Brand, Discount = @Discount, " +
-                               "Price = @Price, Image = @Image, Type = @Type, " +
+                               "Price = @Price, Image = @Image, Image2 = @Image2, Image3 = @Image3, Image4 = @Image4,Type = @Type, " +
                                "BaoHanh = @BaoHanh, CPU = @CPU, RAM = @RAM, " +
                                "ManHinh = @ManHinh, PIN = @PIN, HeDieuHanh = @HeDieuHanh, KhoiLuong = @KhoiLuong, " +
                                "CardDoHoa = @CardDoHoa, BanPhim = @BanPhim, MauSac = @MauSac, " +
@@ -847,6 +859,9 @@ namespace apiProducts.Controllers
                     cmd.Parameters.AddWithValue("@Discount", updatedProduct.Discount);
                     cmd.Parameters.AddWithValue("@Price", updatedProduct.Price);
                     cmd.Parameters.AddWithValue("@Image", updatedProduct.Image);
+                    cmd.Parameters.AddWithValue("@Image2", updatedProduct.Image2);
+                    cmd.Parameters.AddWithValue("@Image3", updatedProduct.Image3);
+                    cmd.Parameters.AddWithValue("@Image4", updatedProduct.Image4);
                     cmd.Parameters.AddWithValue("@Type", updatedProduct.Type);
                     cmd.Parameters.AddWithValue("@BaoHanh", updatedProduct.BaoHanh);
                     cmd.Parameters.AddWithValue("@CPU", updatedProduct.CPU);
