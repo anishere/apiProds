@@ -133,6 +133,102 @@ namespace apiProducts.Controllers
         }
 
         [HttpGet]
+        [Route("SearchTaiNghe")]
+        public Response SearchTaiNghe(string keyword, int page = 1, int pageSize = 20)
+        {
+            List<ProductsTaiNghe> lstproducts = new List<ProductsTaiNghe>();
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            try
+            {
+                connection.Open();
+
+                // Truy vấn đếm tổng số sản phẩm TaiNghe khớp với từ khóa tìm kiếm
+                string countQuery = "SELECT COUNT(*) FROM ProductsTaiNghe WHERE ProductName LIKE @Keyword";
+                int totalCount = 0;
+
+                using (SqlCommand countCmd = new SqlCommand(countQuery, connection))
+                {
+                    countCmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    totalCount = (int)countCmd.ExecuteScalar();
+                }
+
+                // Truy vấn lấy thông tin sản phẩm TaiNghe với phân trang
+                string query = @"
+            SELECT * FROM ProductsTaiNghe 
+            WHERE ProductName LIKE @Keyword 
+            ORDER BY ProductID 
+            OFFSET @StartIndex ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    cmd.Parameters.AddWithValue("@StartIndex", (page - 1) * pageSize);
+                    cmd.Parameters.AddWithValue("@PageSize", pageSize);
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        ProductsTaiNghe products = new ProductsTaiNghe();
+                        products.ProductID = Convert.ToInt32(reader["ProductID"]);
+                        products.ProductName = Convert.ToString(reader["ProductName"]);
+                        products.Description = Convert.ToString(reader["Description"]);
+                        products.Brand = Convert.ToString(reader["Brand"]);
+                        products.Discount = Convert.ToDecimal(reader["Discount"]);
+                        products.Price = Convert.ToDecimal(reader["Price"]);
+                        products.Image = Convert.ToString(reader["Image"]);
+                        products.Image2 = Convert.ToString(reader["Image2"]);
+                        products.Image3 = Convert.ToString(reader["Image3"]);
+                        products.Image4 = Convert.ToString(reader["Image4"]);
+                        products.Type = Convert.ToString(reader["Type"]);
+                        products.BaoHanh = Convert.ToString(reader["BaoHanh"]);
+                        products.TanSo = Convert.ToString(reader["TanSo"]);
+                        products.KetNoi = Convert.ToString(reader["KetNoi"]);
+                        products.KieuKetNoi = Convert.ToString(reader["KieuKetNoi"]);
+                        products.MauSac = Convert.ToString(reader["MauSac"]);
+                        products.DenLed = Convert.ToString(reader["DenLed"]);
+                        products.Microphone = Convert.ToString(reader["Microphone"]);
+                        products.KhoiLuong = Convert.ToString(reader["KhoiLuong"]);
+                        products.NgayNhap = Convert.ToDateTime(reader["NgayNhap"]);
+                        lstproducts.Add(products);
+                    }
+                }
+
+                Response response = new Response();
+                if (lstproducts.Count > 0)
+                {
+                    response.StatusCode = 200;
+                    response.StatusMessage = "Products found";
+                    response.listTaiNghe = lstproducts;
+                    response.TotalCount = totalCount; // Thêm số lượng tổng cộng
+                }
+                else
+                {
+                    response.StatusCode = 100;
+                    response.StatusMessage = "No products found";
+                    response.listTaiNghe = null;
+                    response.TotalCount = 0; // Thêm số lượng tổng cộng
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Response response = new Response();
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+                response.listTaiNghe = null;
+                response.TotalCount = 0; // Thêm số lượng tổng cộng
+                return response;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+
+        [HttpGet]
         [Route("GetTaiNgheById/{id}")]
         public Response GetTaiNgheById(int id)
         {

@@ -187,7 +187,7 @@ namespace apiProducts.Controllers
 
         [HttpGet]
         [Route("SearchProducts")]
-        public Response SearchProducts(string keyword)
+        public Response SearchProducts(string keyword, int page = 1, int pageSize = 20)
         {
             List<ProductsPcLaptop> products = new List<ProductsPcLaptop>();
             SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
@@ -196,11 +196,28 @@ namespace apiProducts.Controllers
             {
                 connection.Open();
 
-                string query = "SELECT * FROM ProductsPCLapTop WHERE ProductName LIKE @Keyword ORDER BY ProductID";
+                // Truy vấn đếm tổng số sản phẩm
+                string countQuery = "SELECT COUNT(*) FROM ProductsPCLapTop WHERE ProductName LIKE @Keyword";
+                int totalCount = 0;
+
+                using (SqlCommand countCmd = new SqlCommand(countQuery, connection))
+                {
+                    countCmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    totalCount = (int)countCmd.ExecuteScalar();
+                }
+
+                // Truy vấn lấy thông tin sản phẩm
+                string query = @"
+            SELECT * FROM ProductsPCLapTop 
+            WHERE ProductName LIKE @Keyword 
+            ORDER BY ProductID 
+            OFFSET @StartIndex ROWS FETCH NEXT @PageSize ROWS ONLY";
 
                 using (SqlCommand cmd = new SqlCommand(query, connection))
                 {
                     cmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    cmd.Parameters.AddWithValue("@StartIndex", (page - 1) * pageSize);
+                    cmd.Parameters.AddWithValue("@PageSize", pageSize);
 
                     SqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
@@ -213,6 +230,9 @@ namespace apiProducts.Controllers
                         product.Discount = Convert.ToDecimal(reader["Discount"]);
                         product.Price = Convert.ToDecimal(reader["Price"]);
                         product.Image = Convert.ToString(reader["Image"]);
+                        product.Image2 = Convert.ToString(reader["Image2"]);
+                        product.Image3 = Convert.ToString(reader["Image3"]);
+                        product.Image4 = Convert.ToString(reader["Image4"]);
                         product.Type = Convert.ToString(reader["Type"]);
                         product.BaoHanh = Convert.ToString(reader["BaoHanh"]);
                         product.CPU = Convert.ToString(reader["CPU"]);
@@ -230,7 +250,6 @@ namespace apiProducts.Controllers
                         product.KieuKetNoi = Convert.ToString(reader["KieuKetNoi"]);
                         product.Hot = Convert.ToString(reader["Hot"]);
                         product.NgayNhap = Convert.ToDateTime(reader["NgayNhap"]);
-
                         products.Add(product);
                     }
                 }
@@ -241,12 +260,14 @@ namespace apiProducts.Controllers
                     response.StatusCode = 200;
                     response.StatusMessage = "Products found";
                     response.listproducts = products;
+                    response.TotalCount = totalCount; // Thêm số lượng tổng cộng
                 }
                 else
                 {
                     response.StatusCode = 100;
                     response.StatusMessage = "No products found";
                     response.listproducts = null;
+                    response.TotalCount = 0; // Thêm số lượng tổng cộng
                 }
 
                 return response;
@@ -257,6 +278,7 @@ namespace apiProducts.Controllers
                 response.StatusCode = 500;
                 response.StatusMessage = "An error occurred: " + ex.Message;
                 response.listproducts = null;
+                response.TotalCount = 0; // Thêm số lượng tổng cộng
                 return response;
             }
             finally
@@ -264,6 +286,7 @@ namespace apiProducts.Controllers
                 connection.Close();
             }
         }
+
 
         [HttpGet]
         [Route("GetLaptops")]

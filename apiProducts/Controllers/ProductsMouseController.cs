@@ -141,6 +141,106 @@ namespace apiProducts.Controllers
         }
 
         [HttpGet]
+        [Route("SearchMouse")]
+        public Response SearchMice(string keyword, int page = 1, int pageSize = 20)
+        {
+            List<ProductsMouse> lstproducts = new List<ProductsMouse>();
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            try
+            {
+                connection.Open();
+
+                // Truy vấn đếm tổng số sản phẩm chuột khớp với từ khóa tìm kiếm
+                string countQuery = "SELECT COUNT(*) FROM ProductsMouse WHERE ProductName LIKE @Keyword";
+                int totalCount = 0;
+
+                using (SqlCommand countCmd = new SqlCommand(countQuery, connection))
+                {
+                    countCmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    totalCount = (int)countCmd.ExecuteScalar();
+                }
+
+                // Truy vấn lấy thông tin sản phẩm chuột với phân trang
+                string query = @"
+            SELECT * FROM ProductsMouse 
+            WHERE ProductName LIKE @Keyword 
+            ORDER BY ProductID 
+            OFFSET @StartIndex ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    cmd.Parameters.AddWithValue("@StartIndex", (page - 1) * pageSize);
+                    cmd.Parameters.AddWithValue("@PageSize", pageSize);
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        ProductsMouse products = new ProductsMouse();
+                        products.ProductID = Convert.ToInt32(reader["ProductID"]);
+                        products.ProductName = Convert.ToString(reader["ProductName"]);
+                        products.Description = Convert.ToString(reader["Description"]);
+                        products.Brand = Convert.ToString(reader["Brand"]);
+                        products.Discount = Convert.ToDecimal(reader["Discount"]);
+                        products.Price = Convert.ToDecimal(reader["Price"]);
+                        products.Image = Convert.ToString(reader["Image"]);
+                        products.Image2 = Convert.ToString(reader["Image2"]);
+                        products.Image3 = Convert.ToString(reader["Image3"]);
+                        products.Image4 = Convert.ToString(reader["Image4"]);
+                        products.BaoHanh = Convert.ToString(reader["BaoHanh"]);
+                        products.MauSac = Convert.ToString(reader["MauSac"]);
+                        products.KieuKetNoi = Convert.ToString(reader["KieuKetNoi"]);
+                        products.NhuCau = Convert.ToString(reader["NhuCau"]);
+                        products.KieuCam = Convert.ToString(reader["KieuCam"]);
+                        products.SoNutBam = Convert.ToString(reader["SoNutBam"]);
+                        products.DenLed = Convert.ToString(reader["DenLed"]);
+                        products.KichThuoc = Convert.ToString(reader["KichThuoc"]);
+                        products.KhoiLuong = Convert.ToString(reader["KhoiLuong"]);
+                        products.DoPhanGiai = Convert.ToString(reader["DoPhanGiai"]);
+                        products.DangCamBien = Convert.ToString(reader["DangCamBien"]);
+                        products.DoNhay = Convert.ToString(reader["DoNhay"]);
+                        products.Type = Convert.ToString(reader["Type"]);
+                        products.NgayNhap = Convert.ToDateTime(reader["NgayNhap"]);
+                        lstproducts.Add(products);
+                    }
+                }
+
+                Response response = new Response();
+                if (lstproducts.Count > 0)
+                {
+                    response.StatusCode = 200;
+                    response.StatusMessage = "Products found";
+                    response.listMouse = lstproducts;
+                    response.TotalCount = totalCount; // Thêm số lượng tổng cộng
+                }
+                else
+                {
+                    response.StatusCode = 100;
+                    response.StatusMessage = "No products found";
+                    response.listMouse = null;
+                    response.TotalCount = 0; // Thêm số lượng tổng cộng
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Response response = new Response();
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+                response.listMouse = null;
+                response.TotalCount = 0; // Thêm số lượng tổng cộng
+                return response;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+
+        [HttpGet]
         [Route("GetMouseById/{id}")]
         public Response GetMouseById(int id)
         {

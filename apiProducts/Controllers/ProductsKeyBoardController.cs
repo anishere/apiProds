@@ -132,6 +132,100 @@ namespace apiProducts.Controllers
         }
 
         [HttpGet]
+        [Route("SearchKeyboards")]
+        public Response SearchKeyboards(string keyword, int page = 1, int pageSize = 20)
+        {
+            List<ProductsKeyboard> lstproducts = new List<ProductsKeyboard>();
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            try
+            {
+                connection.Open();
+
+                // Truy vấn đếm tổng số sản phẩm bàn phím khớp với từ khóa tìm kiếm
+                string countQuery = "SELECT COUNT(*) FROM ProductsKeyboard WHERE ProductName LIKE @Keyword";
+                int totalCount = 0;
+
+                using (SqlCommand countCmd = new SqlCommand(countQuery, connection))
+                {
+                    countCmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    totalCount = (int)countCmd.ExecuteScalar();
+                }
+
+                // Truy vấn lấy thông tin sản phẩm bàn phím với phân trang
+                string query = @"
+            SELECT * FROM ProductsKeyboard 
+            WHERE ProductName LIKE @Keyword 
+            ORDER BY ProductID 
+            OFFSET @StartIndex ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Keyword", $"%{keyword}%");
+                    cmd.Parameters.AddWithValue("@StartIndex", (page - 1) * pageSize);
+                    cmd.Parameters.AddWithValue("@PageSize", pageSize);
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        ProductsKeyboard products = new ProductsKeyboard();
+                        products.ProductID = Convert.ToInt32(reader["ProductID"]);
+                        products.ProductName = Convert.ToString(reader["ProductName"]);
+                        products.Description = Convert.ToString(reader["Description"]);
+                        products.Brand = Convert.ToString(reader["Brand"]);
+                        products.Discount = Convert.ToDecimal(reader["Discount"]);
+                        products.Price = Convert.ToDecimal(reader["Price"]);
+                        products.BaoHanh = Convert.ToString(reader["BaoHanh"]);
+                        products.Image = Convert.ToString(reader["Image"]);
+                        products.Image2 = Convert.ToString(reader["Image2"]);
+                        products.Image3 = Convert.ToString(reader["Image3"]);
+                        products.Image4 = Convert.ToString(reader["Image4"]);
+                        products.Type = Convert.ToString(reader["Type"]);
+                        products.Switch = Convert.ToString(reader["Switch"]);
+                        products.MauSac = Convert.ToString(reader["MauSac"]);
+                        products.KieuKetNoi = Convert.ToString(reader["KieuKetNoi"]);
+                        products.DenLed = Convert.ToString(reader["DenLed"]);
+                        products.KeTay = Convert.ToString(reader["KeTay"]);
+                        products.KichThuoc = Convert.ToString(reader["KichThuoc"]);
+                        products.NgayNhap = Convert.ToDateTime(reader["NgayNhap"]);
+                        lstproducts.Add(products);
+                    }
+                }
+
+                Response response = new Response();
+                if (lstproducts.Count > 0)
+                {
+                    response.StatusCode = 200;
+                    response.StatusMessage = "Products found";
+                    response.listKeyBoard = lstproducts;
+                    response.TotalCount = totalCount; // Thêm số lượng tổng cộng
+                }
+                else
+                {
+                    response.StatusCode = 100;
+                    response.StatusMessage = "No products found";
+                    response.listKeyBoard = null;
+                    response.TotalCount = 0; // Thêm số lượng tổng cộng
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Response response = new Response();
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+                response.listKeyBoard = null;
+                response.TotalCount = 0; // Thêm số lượng tổng cộng
+                return response;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+        [HttpGet]
         [Route("GetKeyBoardById/{id}")]
         public Response GetKeyBoardById(int id)
         {
