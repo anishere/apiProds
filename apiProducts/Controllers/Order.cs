@@ -41,9 +41,12 @@ namespace apiProducts.Controllers
                             order.PhoneNumber = reader["PhoneNumber"] as string;
                             order.Name = reader["Name"] as string;
                             order.Address = reader["Address"] as string;
+                            order.Note = reader["Note"] as string; // Lấy dữ liệu từ cột Note
+                            order.Email = reader["Email"] as string; // Lấy dữ liệu từ cột Email
                             order.ListCart = reader["ListCart"] as string;
                             order.TotalPrice = reader["TotalPrice"] as decimal?;
                             order.Status = reader["Status"] as string;
+                            order.CodePayment = reader["CodePayment"] as string; // Lấy dữ liệu từ cột CodePayment
                             orders.Add(order);
                         }
                     }
@@ -69,17 +72,20 @@ namespace apiProducts.Controllers
                 using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product")))
                 {
                     connection.Open();
-                    string query = "INSERT INTO [Order] (PhoneNumber, Name, Address, ListCart, TotalPrice, Status) " +
-                                   "VALUES (@PhoneNumber, @Name, @Address, @ListCart, @TotalPrice, @Status); SELECT SCOPE_IDENTITY();";
+                    string query = "INSERT INTO [Order] (PhoneNumber, Name, Address, Note, Email, ListCart, TotalPrice, Status, CodePayment) " +
+                                   "VALUES (@PhoneNumber, @Name, @Address, @Note, @Email, @ListCart, @TotalPrice, @Status, @CodePayment); SELECT SCOPE_IDENTITY();";
 
                     using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
                         cmd.Parameters.AddWithValue("@PhoneNumber", order.PhoneNumber);
                         cmd.Parameters.AddWithValue("@Name", order.Name);
                         cmd.Parameters.AddWithValue("@Address", order.Address);
+                        cmd.Parameters.AddWithValue("@Note", order.Note); // Thêm dữ liệu vào cột Note
+                        cmd.Parameters.AddWithValue("@Email", order.Email); // Thêm dữ liệu vào cột Email
                         cmd.Parameters.AddWithValue("@ListCart", order.ListCart);
                         cmd.Parameters.AddWithValue("@TotalPrice", order.TotalPrice ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@Status", order.Status);
+                        cmd.Parameters.AddWithValue("@CodePayment", order.CodePayment); // Thêm dữ liệu vào cột CodePayment
 
                         int newId = Convert.ToInt32(cmd.ExecuteScalar());
 
@@ -95,6 +101,38 @@ namespace apiProducts.Controllers
                 return StatusCode(500, new Response { StatusCode = 500, StatusMessage = "An error occurred: " + ex.Message });
             }
         }
+
+        [HttpPost]
+        [Route("UpdateOrderStatus")]
+        public ActionResult<Response> UpdateOrderStatus(int orderId, string newStatus)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product")))
+                {
+                    connection.Open();
+                    string query = "UPDATE [Order] SET Status = @Status WHERE ID = @OrderId";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@Status", newStatus);
+                        cmd.Parameters.AddWithValue("@OrderId", orderId);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                            return Ok(new Response { StatusCode = 200, StatusMessage = "Order status updated successfully" });
+                        else
+                            return Ok(new Response { StatusCode = 100, StatusMessage = "Failed to update order status or order not found" });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new Response { StatusCode = 500, StatusMessage = "An error occurred: " + ex.Message });
+            }
+        }
+
 
         [HttpDelete]
         [Route("DeleteOrder/{id}")]

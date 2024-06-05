@@ -22,6 +22,68 @@ namespace apiProducts.Controllers
         }
 
         [HttpGet]
+        [Route("GetAllAccounts")]
+        public Response GetAllAccounts()
+        {
+            List<Account> accounts = new List<Account>();
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            try
+            {
+                connection.Open();
+
+                string query = "SELECT IdTaiKhoan, UserName, Password, Email, PhanQuyen, SDT, Image FROM Accounts ORDER BY IdTaiKhoan";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        Account account = new Account();
+                        account.IdTaiKhoan = Convert.ToInt32(reader["IdTaiKhoan"]);
+                        account.UserName = Convert.ToString(reader["UserName"]);
+                        account.Password = Convert.ToString(reader["Password"]);
+                        account.Email = Convert.ToString(reader["Email"]);
+                        account.PhanQuyen = Convert.ToString(reader["PhanQuyen"]);
+                        account.SDT = Convert.ToString(reader["SDT"]);
+                        account.Image = Convert.ToString(reader["Image"]);
+                        accounts.Add(account);
+                    }
+                }
+
+                Response response = new Response();
+                if (accounts.Count > 0)
+                {
+                    response.StatusCode = 200;
+                    response.StatusMessage = "Accounts found";
+                    response.listaccounts = accounts;
+                }
+                else
+                {
+                    response.StatusCode = 100;
+                    response.StatusMessage = "No accounts found";
+                    response.listaccounts = null;
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Response response = new Response();
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+                response.listaccounts = null;
+                return response;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+
+
+        [HttpGet]
         [Route("account/{id}")]
         public Account GetAccountById(int id)
         {
@@ -162,7 +224,121 @@ namespace apiProducts.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("updateAccount")]
+        public Boolean UpdateAccount(Account updatedAccount)
+        {
+            using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString()))
+            {
+                string updateQuery = "UPDATE Accounts SET UserName = @UserName, Email = @Email, SDT = @SDT, Image = @Image " +
+                                     "WHERE IdTaiKhoan = @IdTaiKhoan";
 
+                SqlCommand updateCmd = new SqlCommand(updateQuery, connection);
+                updateCmd.Parameters.AddWithValue("@UserName", updatedAccount.UserName);
+                updateCmd.Parameters.AddWithValue("@Email", updatedAccount.Email);
+                updateCmd.Parameters.AddWithValue("@SDT", updatedAccount.SDT);
+                updateCmd.Parameters.AddWithValue("@Image", updatedAccount.Image);
+                updateCmd.Parameters.AddWithValue("@IdTaiKhoan", updatedAccount.IdTaiKhoan);
+
+                connection.Open();
+                int rowsAffected = updateCmd.ExecuteNonQuery();
+
+                return rowsAffected > 0;
+            }
+        }
+
+        [HttpPut]
+        [Route("UpdateRole")]
+        public Response UpdateRole(int idTaiKhoan, string newRole)
+        {
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            try
+            {
+                connection.Open();
+
+                string query = "UPDATE Accounts SET PhanQuyen = @PhanQuyen WHERE IdTaiKhoan = @IdTaiKhoan";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhanQuyen", newRole);
+                    cmd.Parameters.AddWithValue("@IdTaiKhoan", idTaiKhoan);
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+
+                    Response response = new Response();
+                    if (rowsAffected > 0)
+                    {
+                        response.StatusCode = 200;
+                        response.StatusMessage = "Role updated successfully";
+                    }
+                    else
+                    {
+                        response.StatusCode = 100;
+                        response.StatusMessage = "Account not found";
+                    }
+
+                    return response;
+                }
+            }
+            catch (Exception ex)
+            {
+                Response response = new Response();
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+                return response;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+
+        [HttpDelete]
+        [Route("DeleteAccount/{id}")]
+        public Response DeleteAccount(int id)
+        {
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            try
+            {
+                connection.Open();
+
+                string query = "DELETE FROM Accounts WHERE IdTaiKhoan = @IdTaiKhoan";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@IdTaiKhoan", id);
+                    int rowsAffected = cmd.ExecuteNonQuery();
+
+                    Response response = new Response();
+                    if (rowsAffected > 0)
+                    {
+                        response.StatusCode = 200;
+                        response.StatusMessage = "Account deleted successfully";
+                    }
+                    else
+                    {
+                        response.StatusCode = 100;
+                        response.StatusMessage = "Account not found";
+                    }
+
+                    return response;
+                }
+            }
+            catch (Exception ex)
+            {
+                Response response = new Response();
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+                return response;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
 
 
         /*[HttpPost]

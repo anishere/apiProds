@@ -10,6 +10,10 @@
 
         public List<Order>? listorders { get; set; }
 
+        public List<Account> listaccounts { get; set; }
+
+        public List<Blog> ListBlogs { get; set; }
+
         public List<ProductsCPU>? listcpu { get; set; }
 
         public List<ProductsKeyboard>? listKeyBoard { get; set; }
