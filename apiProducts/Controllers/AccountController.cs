@@ -32,7 +32,7 @@ namespace apiProducts.Controllers
             {
                 connection.Open();
 
-                string query = "SELECT IdTaiKhoan, UserName, Password, Email, PhanQuyen, SDT, Image FROM Accounts ORDER BY IdTaiKhoan";
+                string query = "SELECT IdTaiKhoan, UserName, Password, Email, PhanQuyen, SDT, Image, Visible FROM Accounts ORDER BY IdTaiKhoan";
 
                 using (SqlCommand cmd = new SqlCommand(query, connection))
                 {
@@ -47,6 +47,7 @@ namespace apiProducts.Controllers
                         account.PhanQuyen = Convert.ToString(reader["PhanQuyen"]);
                         account.SDT = Convert.ToString(reader["SDT"]);
                         account.Image = Convert.ToString(reader["Image"]);
+                        account.Visible = Convert.ToString(reader["Visible"]);
                         accounts.Add(account);
                     }
                 }
@@ -89,7 +90,7 @@ namespace apiProducts.Controllers
         {
             using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString()))
             {
-                string query = "SELECT IdTaiKhoan, UserName, Password, Email, PhanQuyen, SDT, Image " +
+                string query = "SELECT IdTaiKhoan, UserName, Password, Email, PhanQuyen, SDT, Image, Visible " +
                                "FROM Accounts WHERE IdTaiKhoan = @Id";
 
                 SqlCommand cmd = new SqlCommand(query, connection);
@@ -119,14 +120,13 @@ namespace apiProducts.Controllers
             }
         }
 
-
         [HttpPost]
         [Route("login")]
         public LoginResponse Login(Account account)
         {
             using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString()))
             {
-                string query = "SELECT IdTaiKhoan, UserName, Password, Email, SDT, PhanQuyen " +
+                string query = "SELECT IdTaiKhoan, UserName, Password, Email, SDT, PhanQuyen, Visible " +
                                "FROM Accounts WHERE UserName = @UserName AND Password = @Password";
 
                 SqlCommand cmd = new SqlCommand(query, connection);
@@ -142,8 +142,9 @@ namespace apiProducts.Controllers
                     DataRow row = dt.Rows[0];
                     string phanQuyen = (row["PhanQuyen"].ToString() == "true") ? "admin" : "user";
                     int idTaiKhoan = Convert.ToInt32(row["IdTaiKhoan"]);
+                    string visible = row["Visible"].ToString();
 
-                    return new LoginResponse { IdTaiKhoan = idTaiKhoan, PhanQuyen = phanQuyen };
+                    return new LoginResponse { IdTaiKhoan = idTaiKhoan, PhanQuyen = phanQuyen, Visible = visible };
                 }
                 else
                 {
@@ -151,7 +152,6 @@ namespace apiProducts.Controllers
                 }
             }
         }
-
 
         [HttpPost]
         [Route("update")]
@@ -189,9 +189,15 @@ namespace apiProducts.Controllers
 
         [HttpPost]
         [Route("register")]
-        public Boolean Register(Account newAccount)
+        public bool Register(Account newAccount)
         {
-            using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString()))
+            // Nếu newAccount.Visible không được thiết lập (null hoặc chuỗi rỗng), sử dụng giá trị mặc định
+            if (string.IsNullOrEmpty(newAccount.Visible))
+            {
+                newAccount.Visible = "00000000000000";
+            }
+
+            using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product")))
             {
                 // Kiểm tra xem UserName đã tồn tại hay chưa
                 string checkQuery = "SELECT COUNT(*) FROM Accounts WHERE UserName = @UserName";
@@ -208,14 +214,15 @@ namespace apiProducts.Controllers
                 else
                 {
                     // Thêm tài khoản mới vào cơ sở dữ liệu với PhanQuyen mặc định là false
-                    string insertQuery = "INSERT INTO Accounts (UserName, Password, Email, PhanQuyen, SDT, Image) " +
-                                         "VALUES (@UserName, @Password, @Email, 'false', @SDT, @Image)";
+                    string insertQuery = "INSERT INTO Accounts (UserName, Password, Email, PhanQuyen, SDT, Image, Visible) " +
+                                         "VALUES (@UserName, @Password, @Email, 'false', @SDT, @Image, @Visible)";
                     SqlCommand insertCmd = new SqlCommand(insertQuery, connection);
                     insertCmd.Parameters.AddWithValue("@UserName", newAccount.UserName);
                     insertCmd.Parameters.AddWithValue("@Password", newAccount.Password);
                     insertCmd.Parameters.AddWithValue("@Email", newAccount.Email);
                     insertCmd.Parameters.AddWithValue("@SDT", newAccount.SDT);
-                    insertCmd.Parameters.AddWithValue("@Image", newAccount.Image); // Chèn giá trị cho cột Image
+                    insertCmd.Parameters.AddWithValue("@Image", newAccount.Image);
+                    insertCmd.Parameters.AddWithValue("@Visible", newAccount.Visible); // Chèn giá trị cho cột Visible
 
                     int rowsAffected = insertCmd.ExecuteNonQuery();
 
@@ -294,6 +301,52 @@ namespace apiProducts.Controllers
             }
         }
 
+        [HttpPut]
+        [Route("UpdateVisible")]
+        public Response UpdateVisible(int idTaiKhoan, string visible)
+        {
+            SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Product").ToString());
+
+            try
+            {
+                connection.Open();
+
+                string query = "UPDATE Accounts SET Visible = @Visible WHERE IdTaiKhoan = @IdTaiKhoan";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Visible", visible);
+                    cmd.Parameters.AddWithValue("@IdTaiKhoan", idTaiKhoan);
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+
+                    Response response = new Response();
+                    if (rowsAffected > 0)
+                    {
+                        response.StatusCode = 200;
+                        response.StatusMessage = "Visible updated successfully";
+                    }
+                    else
+                    {
+                        response.StatusCode = 100;
+                        response.StatusMessage = "Account not found";
+                    }
+
+                    return response;
+                }
+            }
+            catch (Exception ex)
+            {
+                Response response = new Response();
+                response.StatusCode = 500;
+                response.StatusMessage = "An error occurred: " + ex.Message;
+                return response;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
 
         [HttpDelete]
         [Route("DeleteAccount/{id}")]
